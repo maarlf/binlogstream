@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:latest  # Change the image to MariaDB
+    container_name: <container_name>
+    environment:
+      MARIADB_ROOT_PASSWORD: <root_password>
+      MARIADB_DATABASE: <db>
+      MARIADB_USER: <user>
+      MARIADB_PASSWORD: <password>
+    ports:
+      - "<ports>"
+    volumes:
+      - mariadb_data:/var/lib/mysql 
+      - ./init-scripts:/docker-entrypoint-initdb.d
+
+    # The files should be something like <binlog>.000001, see with executing this query: SHOW BINARY LOGS;
+    # To see server id execute this query: SELECT @@server_id;
+    command: --log-bin=<binlog>
+
+volumes:
+  mariadb_data:
