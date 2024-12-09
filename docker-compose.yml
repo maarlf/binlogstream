@@ -17,7 +17,12 @@ services:
 
     # The files should be something like <binlog>.000001, see with executing this query: SHOW BINARY LOGS;
     # To see server id execute this query: SELECT @@server_id;
-    command: --log-bin=<binlog>
+    
+    # Required settings
+    # https://dev.mysql.com/doc/refman/8.4/en/binary-log-formats.html
+    # https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html
+
+    command: --log-bin=<binlog> --binlog-format=ROW --binlog-row-metadata=FULL --binlog-row-image=FULL
 
 volumes:
   mariadb_data:
