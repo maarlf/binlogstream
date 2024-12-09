@@ -13,7 +13,7 @@ if __name__ == "__main__":
     'collation':'utf8mb4_general_ci'  # Specify a supported collation
   }
 
-  stream = BinLogStreamReader(connection_settings=config, server_id=1, log_file='mariadb.000001')
+  stream = BinLogStreamReader(connection_settings=config, server_id=1, log_file='<log_file>')
 
   # Map these events fron a binlog file
 
