@@ -11,7 +11,7 @@ from pymysqlreplication.row_event import (
 if __name__ == "__main__":
     # MySQL connection parameters
     load_dotenv()
-    
+
     config = {
         "user": os.environ.get("DB_USER"),
         "password": os.environ.get("DB_PASSWORD"),
