@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import (
     WriteRowsEvent,
@@ -8,13 +10,16 @@ from pymysqlreplication.row_event import (
 
 if __name__ == "__main__":
     # MySQL connection parameters
+    load_dotenv()
+
+    # MySQL connection parameters
     config = {
-        "user": "<user>",
-        "password": "<password>",
-        "host": "<host>",
-        "database": "<db>",
+        "user": os.environ.get("DB_USER"),
+        "password": os.environ.get("DB_PASSWORD"),
+        "host": os.environ.get("DB_HOST"),
+        "database": os.environ.get("DB_DATABASE"),
         "charset": "utf8mb4",
-        "collation": "utf8mb4_general_ci",  # Specify a supported collation
+        "collation": "utf8mb4_general_ci",
     }
 
     stream = BinLogStreamReader(
