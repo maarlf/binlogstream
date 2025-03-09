@@ -31,7 +31,7 @@ DB_HOST=
 
 5. Make some changes in the database
 
-6. See events with `python stream.py`
+6. See events with `python stream.py` or check tests with `pytest test_stream.py -v`
 
 ## Binlog Tools
 
