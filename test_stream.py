@@ -127,90 +127,67 @@ class TestBinLogProcessor:
         assert insert_event.type == "insert"
         assert insert_event.table == "test_users"
 
-        # Fix: Access the nested 'values' dictionary
         assert "values" in insert_event.data
         assert "name" in insert_event.data["values"]
         assert insert_event.data["values"]["name"] == "John Doe"
         assert "email" in insert_event.data["values"]
         assert insert_event.data["values"]["email"] == "john@example.com"
 
-        @pytest.mark.usefixtures("setup_test_table")
-        def test_capture_update_event(self, processor, db_connection):
-            cursor = db_connection.cursor()
-            cursor.execute(
-                "INSERT INTO test_users (name, email) VALUES (%s, %s)",
-                ("Jane Doe", "jane@example.com"),
-            )
-            db_connection.commit()
+    @pytest.mark.usefixtures("setup_test_table")
+    def test_capture_update_event(self, processor, db_connection):
+        cursor = db_connection.cursor()
+        cursor.execute(
+            "INSERT INTO test_users (name, email) VALUES (%s, %s)",
+            ("Jane Doe", "jane@example.com"),
+        )
+        db_connection.commit()
 
-            cursor.execute("SELECT id FROM test_users WHERE name = 'Jane Doe'")
-            user_id = cursor.fetchone()["id"]
+        cursor.execute("SELECT id FROM test_users WHERE name = 'Jane Doe'")
+        user_id = cursor.fetchone()["id"]
 
-            processor.connect()
+        processor.connect()
 
-            cursor.execute(
-                "UPDATE test_users SET name = %s, email = %s WHERE id = %s",
-                ("Jane Smith", "jane.smith@example.com", user_id),
-            )
-            db_connection.commit()
+        cursor.execute(
+            "UPDATE test_users SET name = %s, email = %s WHERE id = %s",
+            ("Jane Smith", "jane.smith@example.com", user_id),
+        )
+        db_connection.commit()
 
-            time.sleep(1)
+        time.sleep(1)
 
-            processor.close()
-            processor.connect()
+        processor.close()
+        processor.connect()
 
-            events = []
-            event_count = 0
-            for event in processor.process_events():
-                events.append(event)
-                event_count += 1
-                if event_count >= 10:  # Limit to avoid infinite loop
-                    break
-                if isinstance(event, UpdateEvent) and event.table == "test_users":
-                    break
+        events = []
+        event_count = 0
+        for event in processor.process_events():
+            events.append(event)
+            event_count += 1
+            if event_count >= 10:  # Limit to avoid infinite loop
+                break
+            if isinstance(event, UpdateEvent) and event.table == "test_users":
+                break
 
-            update_events = [
-                e
-                for e in events
-                if isinstance(e, UpdateEvent) and e.table == "test_users"
-            ]
+        update_events = [
+            e for e in events if isinstance(e, UpdateEvent) and e.table == "test_users"
+        ]
 
-            assert len(update_events) > 0
-            update_event = update_events[0]
-            assert update_event.type == "update"
-            assert update_event.table == "test_users"
+        assert len(update_events) > 0
+        update_event = update_events[0]
+        assert update_event.type == "update"
+        assert update_event.table == "test_users"
 
-            print(f"Update event data structure: {update_event.data}")
+        print(f"Update event data structure: {update_event}")
 
-            # Assuming the structure is a list of rows, each with before/after values
-            assert len(update_event.data) > 0
-            row = update_event.data[0]  # Get the first row
+        assert "name" in update_event.before
+        assert update_event.before["name"] == "Jane Doe"
+        assert "email" in update_event.before
+        assert update_event.before["email"] == "jane@example.com"
 
-            # Check if it's a tuple structure (before, after)
-            if isinstance(row, tuple) and len(row) == 2:
-                before, after = row
-                assert "name" in before
-                assert before["name"] == "Jane Doe"
-                assert "email" in before
-                assert before["email"] == "jane@example.com"
-                assert "name" in after
-                assert after["name"] == "Jane Smith"
-                assert "email" in after
-                assert after["email"] == "jane.smith@example.com"
-            # Or if it's a dictionary with before_values/after_values
-            elif (
-                isinstance(row, dict)
-                and "before_values" in row
-                and "after_values" in row
-            ):
-                assert "name" in row["before_values"]
-                assert row["before_values"]["name"] == "Jane Doe"
-                assert "email" in row["before_values"]
-                assert row["before_values"]["email"] == "jane@example.com"
-                assert "name" in row["after_values"]
-                assert row["after_values"]["name"] == "Jane Smith"
-                assert "email" in row["after_values"]
-                assert row["after_values"]["email"] == "jane.smith@example.com"
+        assert "name" in update_event.after
+        assert update_event.after["name"] == "Jane Smith"
+        assert "email" in update_event.after
+        assert update_event.after["email"] == "jane.smith@example.com"
 
     @pytest.mark.usefixtures("setup_test_table")
     def test_capture_delete_event(self, processor, db_connection):
@@ -253,7 +230,6 @@ class TestBinLogProcessor:
         assert delete_event.type == "delete"
         assert delete_event.table == "test_users"
 
-        # Fix: Access the nested 'values' dictionary
         assert "values" in delete_event.data
         assert "name" in delete_event.data["values"]
         assert delete_event.data["values"]["name"] == "Bob Johnson"
