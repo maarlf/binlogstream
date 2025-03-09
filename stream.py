@@ -11,13 +11,12 @@ from pymysqlreplication.row_event import (
 if __name__ == "__main__":
     # MySQL connection parameters
     load_dotenv()
-
-    # MySQL connection parameters
+    
     config = {
         "user": os.environ.get("DB_USER"),
         "password": os.environ.get("DB_PASSWORD"),
         "host": os.environ.get("DB_HOST"),
-        "database": os.environ.get("DB_DATABASE"),
+        "database": os.environ.get("DB_NAME"),
         "charset": "utf8mb4",
         "collation": "utf8mb4_general_ci",
     }

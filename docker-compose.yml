@@ -2,27 +2,47 @@ version: '3.8'
 
 services:
   mariadb:
-    image: mariadb:latest  # Change the image to MariaDB
-    container_name: <container_name>
+    image: mariadb:latest
+    container_name: mariadb-instance
+    restart: unless-stopped
     environment:
-      MARIADB_ROOT_PASSWORD: <root_password>
-      MARIADB_DATABASE: <db>
-      MARIADB_USER: <user>
-      MARIADB_PASSWORD: <password>
+      MARIADB_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+      MARIADB_DATABASE: "${DB_NAME}"
+      MARIADB_USER: "${DB_USER}"
+      MARIADB_PASSWORD: "${DB_PASSWORD}"
+      TZ: "UTC"
     ports:
-      - "<ports>"
+      - "3306:3306"
     volumes:
-      - mariadb_data:/var/lib/mysql 
+      - mariadb_data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d
+      - ./conf:/etc/mysql/conf.d
 
-    # The files should be something like <binlog>.000001, see with executing this query: SHOW BINARY LOGS;
+    # The binlog files should be something like <binlog>.000001, see with executing this query: SHOW BINARY LOGS;
     # To see server id execute this query: SELECT @@server_id;
     
     # Required settings
     # https://dev.mysql.com/doc/refman/8.4/en/binary-log-formats.html
     # https://dev.mysql.com/doc/refman/8.4/en/replication-options-binary-log.html
+    
+    # Binary log configuration
+    command: >
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --binlog-row-metadata=FULL
+      --binlog-row-image=FULL
+      --server-id=1
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --max_allowed_packet=128M
 
-    command: --log-bin=<binlog> --binlog-format=ROW --binlog-row-metadata=FULL --binlog-row-image=FULL
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MARIADB_USER", "-p$$MARIADB_PASSWORD"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 volumes:
   mariadb_data:
+    name: mariadb_data
