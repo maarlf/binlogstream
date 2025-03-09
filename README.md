@@ -2,6 +2,11 @@
 
 MySQL/MariaDB Binlog stream with Python.
 
+## Requirements
+
+- Python 3
+- Docker and Docker Compose
+
 ## Usage
 
 1. Create virtual environment with Python 3
@@ -12,11 +17,21 @@ MySQL/MariaDB Binlog stream with Python.
   pip install -r requirements.txt
 ```
 
-3. Change placeholders for the connection and `BinlogStreamReader` config in `stream.py`
+3. Prepare the .env files containing these contents
 
-4. Make some changes in the database
+```
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DB_ROOT_PASSWORD=
+DB_HOST=
+```
 
-5. See events with `python stream.py`
+4. Setup the database instance with `docker compose up -d` then `./setup.sh` and see `init-scripts/` for the detailed database setup
+
+5. Make some changes in the database
+
+6. See events with `python stream.py`
 
 ## Binlog Tools
 
