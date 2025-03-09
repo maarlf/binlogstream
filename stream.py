@@ -21,9 +21,7 @@ if __name__ == "__main__":
         "collation": "utf8mb4_general_ci",
     }
 
-    stream = BinLogStreamReader(
-        connection_settings=config, server_id=1, log_file="<log_file>"
-    )
+    stream = BinLogStreamReader(connection_settings=config, server_id=1)
 
     # Map these events fron a binlog file
 
