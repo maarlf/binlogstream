@@ -13,7 +13,6 @@ from stream import (
 )
 
 
-# Test database configuration
 @pytest.fixture
 def test_db_config():
     return DatabaseConfig(
@@ -46,8 +45,6 @@ def db_connection(test_db_config):
 @pytest.fixture
 def setup_test_table(db_connection):
     cursor = db_connection.cursor()
-
-    # Create test table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS test_users (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -56,13 +53,11 @@ def setup_test_table(db_connection):
     )
     """)
 
-    # Clear any existing data
     cursor.execute("DELETE FROM test_users")
     db_connection.commit()
 
     yield
 
-    # Clean up
     cursor.execute("DROP TABLE IF EXISTS test_users")
     db_connection.commit()
     cursor.close()
@@ -86,7 +81,6 @@ class TestBinLogProcessor:
         processor.close()
 
     def test_get_latest_binlog(self, processor):
-        # This test requires binary logging to be enabled on the test database
         binlog = processor.get_latest_binlog()
 
         # We just check that we get a string back, not None
@@ -97,14 +91,11 @@ class TestBinLogProcessor:
 
     @pytest.mark.usefixtures("setup_test_table")
     def test_capture_insert_event(self, processor, db_connection):
-        # Start the processor
         processor.connect()
 
-        # Get the current position to start reading from
         current_binlog = processor.get_latest_binlog()
         processor.log_file = current_binlog
 
-        # Insert a record
         cursor = db_connection.cursor()
         cursor.execute(
             "INSERT INTO test_users (name, email) VALUES (%s, %s)",
@@ -112,14 +103,11 @@ class TestBinLogProcessor:
         )
         db_connection.commit()
 
-        # Give the database a moment to process
         time.sleep(1)
 
-        # Reconnect the processor to get fresh events
         processor.close()
         processor.connect()
 
-        # Process events
         events = []
         event_count = 0
         for event in processor.process_events():
@@ -130,7 +118,6 @@ class TestBinLogProcessor:
             if isinstance(event, InsertEvent) and event.table == "test_users":
                 break
 
-        # Find our insert event
         insert_events = [
             e for e in events if isinstance(e, InsertEvent) and e.table == "test_users"
         ]
@@ -149,7 +136,6 @@ class TestBinLogProcessor:
 
         @pytest.mark.usefixtures("setup_test_table")
         def test_capture_update_event(self, processor, db_connection):
-            # Insert a record first
             cursor = db_connection.cursor()
             cursor.execute(
                 "INSERT INTO test_users (name, email) VALUES (%s, %s)",
@@ -157,28 +143,22 @@ class TestBinLogProcessor:
             )
             db_connection.commit()
 
-            # Get the ID of the inserted record
             cursor.execute("SELECT id FROM test_users WHERE name = 'Jane Doe'")
             user_id = cursor.fetchone()["id"]
 
-            # Start the processor
             processor.connect()
 
-            # Update the record
             cursor.execute(
                 "UPDATE test_users SET name = %s, email = %s WHERE id = %s",
                 ("Jane Smith", "jane.smith@example.com", user_id),
             )
             db_connection.commit()
 
-            # Give the database a moment to process
             time.sleep(1)
 
-            # Reconnect the processor to get fresh events
             processor.close()
             processor.connect()
 
-            # Process events
             events = []
             event_count = 0
             for event in processor.process_events():
@@ -189,7 +169,6 @@ class TestBinLogProcessor:
                 if isinstance(event, UpdateEvent) and event.table == "test_users":
                     break
 
-            # Find our update event
             update_events = [
                 e
                 for e in events
@@ -201,7 +180,6 @@ class TestBinLogProcessor:
             assert update_event.type == "update"
             assert update_event.table == "test_users"
 
-            # Let's print the structure to understand it better
             print(f"Update event data structure: {update_event.data}")
 
             # Assuming the structure is a list of rows, each with before/after values
@@ -236,7 +214,6 @@ class TestBinLogProcessor:
 
     @pytest.mark.usefixtures("setup_test_table")
     def test_capture_delete_event(self, processor, db_connection):
-        # Insert a record first
         cursor = db_connection.cursor()
         cursor.execute(
             "INSERT INTO test_users (name, email) VALUES (%s, %s)",
@@ -244,25 +221,19 @@ class TestBinLogProcessor:
         )
         db_connection.commit()
 
-        # Get the ID of the inserted record
         cursor.execute("SELECT id FROM test_users WHERE name = 'Bob Johnson'")
         user_id = cursor.fetchone()["id"]
 
-        # Start the processor
         processor.connect()
 
-        # Delete the record
         cursor.execute("DELETE FROM test_users WHERE id = %s", (user_id,))
         db_connection.commit()
 
-        # Give the database a moment to process
         time.sleep(1)
 
-        # Reconnect the processor to get fresh events
         processor.close()
         processor.connect()
 
-        # Process events
         events = []
         event_count = 0
         for event in processor.process_events():
@@ -273,7 +244,6 @@ class TestBinLogProcessor:
             if isinstance(event, DeleteEvent) and event.table == "test_users":
                 break
 
-        # Find our delete event
         delete_events = [
             e for e in events if isinstance(e, DeleteEvent) and e.table == "test_users"
         ]
