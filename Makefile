@@ -1,4 +1,4 @@
-.PHONY: format clean help
+.PHONY: format clean test help
 
 # Default target
 .DEFAULT_GOAL := help
@@ -9,6 +9,12 @@ format:
 	ruff format .
 	ruff check --fix .
 	@echo "Formatting complete."
+
+# Run tests with pytest
+test:
+	@echo "Running tests with pytest..."
+	pytest -v test_stream.py
+	@echo "Tests complete."
 
 # Clean Python cache files
 clean:
@@ -29,5 +35,6 @@ clean:
 help:
 	@echo "Available targets:"
 	@echo "  format  - Format Python code using Ruff"
+	@echo "  test    - Run tests with pytest"
 	@echo "  clean   - Remove Python cache files and directories"
 	@echo "  help    - Display this help message"
